@@ -74,6 +74,12 @@ void basicThreadTests()
     children[ii] = ULT_CreateThread((void (*)(void *))hello, msg[ii]);
     assert(ULT_isOKRet(children[ii]));
   }
+  int i;
+  for(i = 0; i < 11; i++){
+  ret = ULT_Yield(i);
+  assert(ret == i);
+  printf("Initial thread returns from Yield(%d\n", i);
+}
   for(ii = 0; ii < NTHREAD; ii++){
     ret = ULT_Yield(children[ii]);
     assert(ret == children[ii]);

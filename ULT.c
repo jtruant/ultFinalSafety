@@ -11,19 +11,52 @@
 struct ThrdCtlBlk *queueHead=NULL;
 struct ThrdCtlBlk *queueTail=NULL;
 //number of existing threads
-Tid universalTid=0;
+static Tid universalTid=0;
 //currently running thread
-Tid runningThread=0;
-Tid returnTid=0;
-Tid tidToRun=0;
+static Tid runningThread=0;
+static Tid returnTid=0;
+static Tid tidToRun=0;
+static int numThreads = 0;
+
 struct ThrdCtlBlk *fromQueue(Tid searchTid,struct ThrdCtlBlk **queueHead,struct ThrdCtlBlk *retBlock);
 void pushQueue(struct ThrdCtlBlk ** queueHead,struct ThrdCtlBlk **queueTail, struct ThrdCtlBlk *pushBlock);
 int validTid(Tid searchTid, struct ThrdCtlBlk **queueHead);
-Tid 
-ULT_CreateThread(void (*fn)(void *), void *parg)
+
+Tid ULT_CreateThread(void (*fn)(void *), void *parg)
 {
-  assert(0); /* TBD */
-  return ULT_FAILED;
+//initialize the new thread
+        ThrdCtlBlk *newThread = (ThrdCtlBlk *)malloc(sizeof(ThrdCtlBlk));
+        newThread->context = (ucontext_t *)malloc(sizeof(ucontext_t));
+
+        getcontext(&newThread->threadContext);
+        newThread->context->uc_stack.ss_sp = (char *)malloc(ULT_MIN_STACK);
+        newThread->context->uc_stack.ss_size = ULT_MIN_STACK;
+
+        //makecontext
+        makecontext(newThread->context,(void(*)())StubFn, 3, fn, parg);
+
+        //assign thread tid to new thread
+        universalTid = universalTid + 1;
+	newThread->tid = universalTid;
+
+        numThreads +=1;
+
+	pushQueue(&queueHead, &queueTail, newThread);
+
+        return newThread->tid;
+
+ // assert(0); /* TBD */
+ // return ULT_FAILED;
+}
+
+void StubFn(void(*root)(void *), void *arg)
+{
+//thread starts here
+Tid ret;
+root(arg); //call root function
+ret = ULT_DestroyThread(ULT_SELF);
+assert(ret == ULT_NONE); //we should only get if we are the last thread
+exit(0); //all threads are done, so process should exit
 }
 
 
@@ -60,6 +93,11 @@ Tid ULT_Yield(Tid wantTid)
         returnTid=ULT_INVALID;
         tidToRun=0;
 	wantTid=0; 
+  }
+  else
+  {
+    tidToRun=wantTid;
+    returnTid = tidToRun;
   }
   
   /*declare context variable*/

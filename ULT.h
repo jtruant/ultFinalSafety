@@ -13,6 +13,7 @@ typedef struct ThrdCtlBlk{
   /* ... Fill this in ... */
   Tid tid;
   ucontext_t threadContext;
+  ucontext_t *context;
   struct ThrdCtlBlk *tcbPointerHead;
   struct ThrdCtlBlk *tcbPointerTail;
 } ThrdCtlBlk;
@@ -47,7 +48,7 @@ int stub(void(*root)(void*),void *arg)
 Tid ULT_CreateThread(void (*fn)(void *), void *parg);
 Tid ULT_Yield(Tid tid);
 Tid ULT_DestroyThread(Tid tid);
-
+void StubFn(void(*root)(void*),void* arg);
  
 
  
